@@ -112,27 +112,57 @@ input.value = "";
 };
 
 
+let mediaRecorder;
+let chunks = [];
 
-if('webkitSpeechRecognition' in window){
+voiceBtn.onclick = async function(){
 
-var recognition = new webkitSpeechRecognition();
+if(!mediaRecorder || mediaRecorder.state === "inactive"){
 
-recognition.lang = "ru-RU";
+try{
 
-voiceBtn.onclick = function(){
+const stream = await navigator.mediaDevices.getUserMedia({audio:true});
 
-recognition.start();
+mediaRecorder = new MediaRecorder(stream);
+
+mediaRecorder.ondataavailable = function(e){
+chunks.push(e.data);
+};
+
+mediaRecorder.onstop = function(){
+
+const blob = new Blob(chunks,{type:'audio/webm'});
+const audioUrl = URL.createObjectURL(blob);
+
+var div = document.createElement("div");
+div.className = "message user";
+
+var audio = document.createElement("audio");
+audio.controls = true;
+audio.src = audioUrl;
+
+div.appendChild(audio);
+messages.appendChild(div);
+
+messages.scrollTop = messages.scrollHeight;
+
+chunks = [];
 
 };
 
-recognition.onresult = function(event){
+mediaRecorder.start();
+voiceBtn.innerText = "⏹";
 
-var text = event.results[0][0].transcript;
+}catch(e){
+alert("Нет доступа к микрофону");
+}
 
-input.value = text;
+}else{
 
-};
+mediaRecorder.stop();
+voiceBtn.innerText = "🎤";
 
 }
 
+};
 };
